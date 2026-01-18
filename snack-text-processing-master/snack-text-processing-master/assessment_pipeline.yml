@@ -1,0 +1,47 @@
+# GitLab CI/CD configuration for Text Processing Assessment
+
+# Define the stages of the pipeline
+stages:
+  - test
+
+# Main assessment job
+text-processing-assessment:
+  stage: test
+  image: python:3.10
+  
+  # Cache pip dependencies to speed up builds
+  cache:
+    paths:
+      - ~/.cache/pip3/
+  
+  # Install any dependencies (if needed in the future)
+  before_script:
+    - python3 --version
+    - pip3 --version
+  
+  # Run the tests
+  script:
+    - echo "Running regular tests..."
+    - python3 -m unittest tests/test_text_processor.py
+    - echo "Running hidden tests..."
+    - python3 .hidden/test_code_quality.py
+    - echo "Assessment complete. Check logs for details."
+  
+  # Define when this job should run
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+  
+  # Ensure the pipeline fails if tests fail
+  allow_failure: false
+  
+  # Generate artifacts for test results (if you add test reports in the future)
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - "*.log"
